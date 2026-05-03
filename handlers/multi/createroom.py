@@ -7,7 +7,6 @@ from objects.room.utils import get_id
 from handlers.multi import sio
 from handlers.multi.main_namespace import MultiNamespace
 
-
 bp = Blueprint("createroom", __name__)
 
 

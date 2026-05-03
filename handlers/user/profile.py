@@ -11,6 +11,7 @@ bp = Blueprint("user_profile", __name__)
 
 php_file = True
 
+
 @bp.route("/")
 async def profile():
     params = request.args
@@ -29,13 +30,12 @@ async def profile():
         return await render_template(
             "error.jinja", error_message="No player ID provided"
         )
-    
+
     p = glob.players.get(id=player_id)
     if not p:
         return await render_template("error.jinja", error_message="Player not found")
 
     player_stats = p.stats.as_json
-
 
     recent_scores = await p.get_scores(50)
     if not recent_scores:
@@ -69,15 +69,11 @@ async def profile():
     while True:
         cur = level_formula(i)
         nxt = level_formula(i + 1)
-        if cur <= int(player_stats["rscore"]) and nxt >= int(
-            player_stats["rscore"]
-        ):
+        if cur <= int(player_stats["rscore"]) and nxt >= int(player_stats["rscore"]):
             level = i
             break
         i += 1
-        if cur > int(player_stats["rscore"]) and nxt > int(
-            player_stats["rscore"]
-        ):
+        if cur > int(player_stats["rscore"]) and nxt > int(player_stats["rscore"]):
             level = i
             break
 

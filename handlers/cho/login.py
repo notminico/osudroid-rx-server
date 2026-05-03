@@ -75,7 +75,7 @@ async def login():
                         "UPDATE users SET country = $1 WHERE id = $2",
                         [country, p.id],
                     )
-                    p.country = country # duh
+                    p.country = country  # duh
     except Exception as e:
         logging.error(f"Failed to get country from ip: {e}")
     # returns long string of shit
@@ -84,9 +84,11 @@ async def login():
             id=p.id,
             uuid=p.uuid,
             rank=p.stats.pp_rank if glob.config.pp else p.stats.score_rank,
-            legacy_metric=int(p.stats.pp if glob.config.pp else p.stats.rscore)
-            if glob.config.legacy == True
-            else "",
+            legacy_metric=(
+                int(p.stats.pp if glob.config.pp else p.stats.rscore)
+                if glob.config.legacy == True
+                else ""
+            ),
             score=p.stats.rscore if glob.config.legacy == False else "",
             pp=p.stats.pp if glob.config.legacy == False else "",
             acc=p.stats.droid_acc,

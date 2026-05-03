@@ -16,5 +16,4 @@ class SpectatorEvents:
                 "spectatorData",
                 data=(player.uid, args[0]),
                 to=watcher.sid,
-                 
             )
