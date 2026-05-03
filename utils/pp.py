@@ -65,7 +65,6 @@ class PPCalculator:
         return cls(**{"bm_path": res, **score.as_json})
 
     async def calc(self, api=False):
-
         if isinstance(self.mods, list):
             mods = ModList.from_dict(self.mods)
         elif isinstance(self.mods, str):

@@ -198,7 +198,6 @@ class Score:
         return global_rank, local_rank
 
     async def calc_status(self):
-
         res = await glob.db.fetch(
             "SELECT * FROM scores WHERE playerID = $1 AND md5 = $2 AND status= $3",
             [self.player.id, self.md5, 2],

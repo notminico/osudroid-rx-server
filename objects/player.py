@@ -87,7 +87,6 @@ class Player:
     """
 
     def __init__(self, **kwargs):
-
         self.id: str = kwargs.get("id")
         self.prefix: str = kwargs.get("prefix", "")
         self.username: str = kwargs.get("username")

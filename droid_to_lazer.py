@@ -22,7 +22,6 @@ async def convert_db():
     scores = sorted(scores, key=lambda x: len(x["mods"]), reverse=True)
     print(scores[0])
     for i, score in enumerate(scores):
-
         mods = score["mods"]
         if not mods:
             continue
