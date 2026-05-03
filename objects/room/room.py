@@ -16,7 +16,7 @@ class Room:
         self.is_locked: bool = False
         self.gameplay_settings: RoomSettings = RoomSettings()
         self.max_players: int = 0
-        self.mods: od.ModList = od.ModList()
+        self.mods: od.ModList = od.ModList.from_droid_letters("")
         self.players: list[PlayerMulti] = []
         self.watchers: list[PlayerMulti] = []
         self.status: RoomStatus = RoomStatus.IDLE
@@ -49,7 +49,7 @@ class Room:
             "isLocked": self.is_locked,
             "gameplaySettings": self.gameplay_settings.as_json,
             "maxPlayers": self.max_players,
-            "mods": self.mods.as_calculable_mods,
+            "mods": self.mods.as_calculatable_mods,
             "players": [player.as_json for player in self.players],
             "status": self.status,
             "teamMode": self.team_mode,

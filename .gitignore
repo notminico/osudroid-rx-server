@@ -153,3 +153,11 @@ GeoLite2-Country.mmdb
 coloredlogs
 config.json
 TODO.md
+
+# e2e test artifacts (kept locally only)
+test-before*
+test-after*
+test-plan.md
+test-report.md
+test-demo.log
+
