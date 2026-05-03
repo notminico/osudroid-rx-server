@@ -148,7 +148,7 @@ fulldump.sql
 utils/tets.c
 utils/setup.py
 GeoLite2-Country.mmdb
-tests
+!/tests/
 .vscode/settings.json
 coloredlogs
 config.json

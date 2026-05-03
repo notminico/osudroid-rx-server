@@ -101,8 +101,13 @@ class PostgresDB:
                 VALUES (-1, 100)
                 ON CONFLICT (id) DO NOTHING;
                 """
+        # Avoid a circular import: ranked.db imports `objects.glob` which
+        # transitively imports this module on the first load.
+        from objects.ranked.db import DDL as RANKED_DDL
+
         async with self.pool.acquire() as connection:
             await connection.execute(query)
+            await connection.execute(RANKED_DDL)
 
     async def connect(self):
         # Get the database URL from the environment variable

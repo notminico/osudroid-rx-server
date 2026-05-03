@@ -1,15 +1,18 @@
+import logging
+
 from handlers.multi import sio
 from objects import glob
 from objects.room.consts import RoomStatus
 from objects.room.room import Room
 from objects.room.player import PlayerMulti
+from objects.ranked.registry import registry as ranked_registry
 import utils
 import asyncio
 
 
 class ConnectionEvents:
     async def on_disconnect(self, sid, *args):
-        #TODO че то придумать с ошибками изза реконнекта и вообще блять там пиздец какой то
+        # TODO че то придумать с ошибками изза реконнекта и вообще блять там пиздец какой то
         print(f"Client disconnected: {sid}")
         room_info = glob.rooms.get(id=self.room_id)
         if room_info is None:
@@ -20,7 +23,8 @@ class ConnectionEvents:
             return
 
         await self.emit_event(
-            "playerLeft", data=str(disconnected_player.uid),  
+            "playerLeft",
+            data=str(disconnected_player.uid),
         )
 
         if room_info.host.uid == disconnected_player.uid:
@@ -30,7 +34,6 @@ class ConnectionEvents:
                     await self.emit_event(
                         event="hostChanged",
                         data=str(room_info.host.uid),
-                         
                     )
                     break
 
@@ -41,7 +44,16 @@ class ConnectionEvents:
             if disconnected_player in room_info.match.players:
                 room_info.match.remove_player(disconnected_player)
 
+        ranked_driver = ranked_registry.by_room(str(self.room_id))
+        if ranked_driver is not None:
+            try:
+                await ranked_driver.player_disconnected(int(disconnected_player.uid))
+            except Exception:
+                logging.exception("ranked driver crashed handling disconnect")
+
         if len(room_info.players) == 0:
+            if ranked_driver is not None:
+                ranked_registry.unregister(str(self.room_id))
             glob.rooms.remove(room_info)
 
     async def on_connect(self, sid, environ, *args):
@@ -50,7 +62,7 @@ class ConnectionEvents:
         if room_info is None:
             await sio.disconnect(sid=sid, namespace=self.namespace)
             return
-   
+
         match args[0]["type"]:
             case "0":
                 if room_info.is_locked == True:
@@ -64,32 +76,30 @@ class ConnectionEvents:
                     return
                 room_info.players.append(PlayerMulti.player(id=args[0]["uid"], sid=sid))
                 resp = {
-                            "id": room_info.id,
-                            "name": room_info.name,
-                            "beatmap": {
-                                "md5": room_info.map.md5,
-                                "title": room_info.map.title,
-                                "artist": room_info.map.artist,
-                                "version": room_info.map.version,
-                                "creator": room_info.map.creator,
-                                "beatmapSetId": room_info.map.set_id,
-                            },
-                            "host": room_info.host.as_json,
-                            "isLocked": room_info.is_locked,
-                            "gameplaySettings": room_info.gameplay_settings.as_json,
-                            "maxPlayers": room_info.max_players,
-                            "mods": room_info.mods.as_droid_mods,
-                            "players": [p.as_json for p in room_info.players],
-                            "status": room_info.status,
-                            "teamMode": room_info.team_mode,
-                            "winCondition": room_info.win_condition,
-                            "sessionId": utils.make_uuid(),
-                        }     
-                        
+                    "id": room_info.id,
+                    "name": room_info.name,
+                    "beatmap": {
+                        "md5": room_info.map.md5,
+                        "title": room_info.map.title,
+                        "artist": room_info.map.artist,
+                        "version": room_info.map.version,
+                        "creator": room_info.map.creator,
+                        "beatmapSetId": room_info.map.set_id,
+                    },
+                    "host": room_info.host.as_json,
+                    "isLocked": room_info.is_locked,
+                    "gameplaySettings": room_info.gameplay_settings.as_json,
+                    "maxPlayers": room_info.max_players,
+                    "mods": room_info.mods.as_droid_mods,
+                    "players": [p.as_json for p in room_info.players],
+                    "status": room_info.status,
+                    "teamMode": room_info.team_mode,
+                    "winCondition": room_info.win_condition,
+                    "sessionId": utils.make_uuid(),
+                }
+
             case "1":
-                room_info.watchers.append(
-                    PlayerMulti.watcher(sid=sid)
-                )
+                room_info.watchers.append(PlayerMulti.watcher(sid=sid))
                 resp = {
                     "beatmap": {
                         "md5": room_info.map.md5,
@@ -106,7 +116,6 @@ class ConnectionEvents:
                     "teamMode": room_info.team_mode,
                 }
 
-
         await self.emit_event(data=resp, event="initialConnection", to=sid)
 
         new_player = room_info.get_player(sid=sid)
@@ -114,3 +123,10 @@ class ConnectionEvents:
             return
 
         await self.emit_event("playerJoined", data=new_player.as_json, skip_sid=sid)
+
+        ranked_driver = ranked_registry.by_room(str(self.room_id))
+        if ranked_driver is not None and new_player is not None:
+            try:
+                await ranked_driver.player_connected(int(new_player.uid))
+            except Exception:
+                logging.exception("ranked driver crashed handling join")

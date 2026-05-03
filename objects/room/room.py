@@ -24,6 +24,7 @@ class Room:
         self.win_condition: WinCondition = WinCondition.SCOREV1
         self.password: str = ""
         self.match = Match()
+        self.ranked_match_id: Optional[int] = None
 
     def get_player(
         self, uid: Optional[int] = None, sid: Optional[str] = None

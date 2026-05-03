@@ -1,7 +1,10 @@
+import logging
+
 from objects.room.consts import RoomStatus, PlayerStatus, WinCondition
 from objects.room.match import Match
 from objects.room.room import Room
 from objects import glob
+from objects.ranked.registry import registry as ranked_registry
 
 
 class MatchEvents:
@@ -11,7 +14,8 @@ class MatchEvents:
             return
         room_info.status = RoomStatus.PLAYING
         await self.emit_event(
-            "roomStatusChanged", data=room_info.status,  
+            "roomStatusChanged",
+            data=room_info.status,
         )
         await self.emit_event("playBeatmap")
         for player in room_info.players:
@@ -21,7 +25,6 @@ class MatchEvents:
             await self.emit_event(
                 "playerStatusChanged",
                 (str(player.uid), int(PlayerStatus.PLAYING)),
-                 
             )
             room_info.match.add_player(player)
 
@@ -35,7 +38,7 @@ class MatchEvents:
         room_info.match.loaded(player.uid)
         if room_info.match.all_loaded:
             await self.emit_event(
-                "allPlayersBeatmapLoadComplete",  
+                "allPlayersBeatmapLoadComplete",
             )
             watchers_data = {
                 "mods": room_info.mods.as_calculable_mods,
@@ -47,7 +50,6 @@ class MatchEvents:
                 await self.emit_event(
                     "roundStarted",
                     data=watchers_data,
-                     
                     to=watcher.sid,
                 )
 
@@ -147,4 +149,32 @@ class MatchEvents:
 
             for watcher in room_info.watchers:
                 await self.emit_event("roundEnded", to=watcher.sid)
+
+            ranked_driver = ranked_registry.by_room(str(self.room_id))
+            if ranked_driver is not None:
+                normalized = []
+                for entry in data:
+                    uid = entry.get("uid")
+                    if uid is None:
+                        username = entry.get("username")
+                        match_player = next(
+                            (
+                                p
+                                for p in room_info.match.players
+                                if p.username == username
+                            ),
+                            None,
+                        )
+                        if match_player is not None:
+                            uid = match_player.uid
+                    if uid is None:
+                        continue
+                    normalized.append(
+                        {"uid": int(uid), "score": int(entry.get("score") or 0)}
+                    )
+                try:
+                    await ranked_driver.round_finished(normalized)
+                except Exception:
+                    logging.exception("ranked driver crashed handling round result")
+
             room_info.match = Match()
