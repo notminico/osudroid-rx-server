@@ -41,7 +41,7 @@ class MatchEvents:
                 "allPlayersBeatmapLoadComplete",
             )
             watchers_data = {
-                "mods": room_info.mods.as_calculable_mods,
+                "mods": room_info.mods.as_calculatable_mods,
                 "name": room_info.name,
                 "playingPlayers": [player.as_json for player in room_info.players],
                 "teamMode": room_info.team_mode,
@@ -152,26 +152,15 @@ class MatchEvents:
 
             ranked_driver = ranked_registry.by_room(str(self.room_id))
             if ranked_driver is not None:
-                normalized = []
-                for entry in data:
-                    uid = entry.get("uid")
-                    if uid is None:
-                        username = entry.get("username")
-                        match_player = next(
-                            (
-                                p
-                                for p in room_info.match.players
-                                if p.username == username
-                            ),
-                            None,
-                        )
-                        if match_player is not None:
-                            uid = match_player.uid
-                    if uid is None:
-                        continue
-                    normalized.append(
-                        {"uid": int(uid), "score": int(entry.get("score") or 0)}
-                    )
+                # ``submitted_scores`` is keyed by uid — that's the only
+                # reliable mapping back to the player. The flattened ``data``
+                # list above doesn't carry uid (clients only submit
+                # score/combo/accuracy/etc.), so we walk the dict directly.
+                normalized = [
+                    {"uid": int(uid), "score": int(entry.get("score") or 0)}
+                    for uid, entry in room_info.match.submitted_scores.items()
+                    if entry.get("score") is not None
+                ]
                 try:
                     await ranked_driver.round_finished(normalized)
                 except Exception:

@@ -19,9 +19,11 @@ async def view_score():
         return Success(
             "{mods} {score} {combo} {grade} {hitgeki} {hit300} {hitkatsu} {hit100} {hit50} {hitmiss} {acc} {date}".format(
                 mods=play["mods"],
-                score=(int(play["pp"]) if glob.config.pp_leaderboard else play["score"])
-                if glob.config.legacy == True
-                else play["score"],
+                score=(
+                    (int(play["pp"]) if glob.config.pp_leaderboard else play["score"])
+                    if glob.config.legacy == True
+                    else play["score"]
+                ),
                 combo=play["combo"],
                 grade=play["grade"],
                 hitgeki=play["hitgeki"],

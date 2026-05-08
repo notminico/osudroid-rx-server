@@ -19,7 +19,7 @@ def make_uuid(username: str = ""):
 
 
 def check_folder():
-    required_folders = ["replays", "beatmaps"]
+    required_folders = ["replays", "beatmaps", "rooms", "avatar", "release"]
 
     if not os.path.isdir("data"):
         os.mkdir("data")
@@ -70,12 +70,15 @@ def is_convertable(value, type):
     except ValueError:
         return False
 
+
 def timer(func):
     import time
+
     async def wrapper(*args, **kwargs):
         start = time.perf_counter()
         result = await func(*args, **kwargs)
         end = time.perf_counter()
         logging.debug(f"{func.__name__} took {end - start:.4f} seconds")
         return result
+
     return wrapper

@@ -68,7 +68,7 @@ app = make_app()
 
 def handle_ex(loop, context):
     logging.debug("SSL error ignored: ")
-    logging.debug(f"{context["message"]}")
+    logging.debug("%s", context["message"])
     logging.debug(context["exception"])
 
 
@@ -88,7 +88,9 @@ async def init():
     # Ranked matchmaking — runs every 5s.
     from objects.ranked.queue import Matchmaker
     from objects.ranked.factory import matchmaker_pair_handler
+    from handlers.multi.ranked_namespace import RankedNamespace
 
+    sio.register_namespace(RankedNamespace("/ranked"))
     glob.matchmaker = Matchmaker(matchmaker_pair_handler)
     glob.task_manager.add_periodic_task(glob.matchmaker.tick, 5)
 

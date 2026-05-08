@@ -5,7 +5,6 @@ import os
 import utils
 import re
 
-
 bp = Blueprint("user_change_username", __name__)
 
 
@@ -19,7 +18,9 @@ async def change_username():
         req = await request.form
         username, player_id, auth_hash = login_state.split("-")
         if (
-            utils.check_md5(f"{username}-{player_id}-{glob.config.login_key}", auth_hash)
+            utils.check_md5(
+                f"{username}-{player_id}-{glob.config.login_key}", auth_hash
+            )
             == False
         ):
             return await render_template(
@@ -31,13 +32,16 @@ async def change_username():
             return await render_template(
                 "error.jinja", error_message="Invalid new username"
             )
-        if re.fullmatch(r'^[A-Za-z0-9](?:[A-Za-z0-9]|[._](?![._]))+$', new_username) is None:
+        if (
+            re.fullmatch(r"^[A-Za-z0-9](?:[A-Za-z0-9]|[._](?![._]))+$", new_username)
+            is None
+        ):
             return render_template(
                 "error.jinja", error_message="Username contains invalid characters."
             )
-        
+
         try:
-            if glob.players.get(username=new_username): 
+            if glob.players.get(username=new_username):
                 return await render_template(
                     "error.jinja", error_message="Username already taken"
                 )

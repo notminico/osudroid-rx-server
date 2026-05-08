@@ -10,7 +10,7 @@ class PlayerMulti:
         self.username: str = ""
         self.status: PlayerStatus = PlayerStatus.IDLE
         self.team: int = 0
-        self.mods: od.ModList = od.ModList()
+        self.mods: od.ModList = od.ModList.from_droid_letters("")
         self.sid: str = ""
         self.type = PlayerType.PLAYER
 
@@ -21,7 +21,7 @@ class PlayerMulti:
             "username": self.username,
             "status": self.status,
             "team": self.team,
-            "mods": self.mods.as_calculable_mods,
+            "mods": self.mods.as_calculatable_mods,
         }
 
     @classmethod
@@ -32,7 +32,7 @@ class PlayerMulti:
         instance.username = player.username
         instance.status = PlayerStatus.IDLE
         instance.team = None
-        instance.mods = od.ModList()
+        instance.mods = od.ModList.from_droid_letters("")
         instance.sid = sid
         instance.type = PlayerType.PLAYER
 
@@ -45,5 +45,5 @@ class PlayerMulti:
         instance.username = "Watcher"
         instance.sid = sid
         instance.type = PlayerType.WATCHER
-        
+
         return instance

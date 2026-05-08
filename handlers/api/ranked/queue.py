@@ -7,6 +7,7 @@ from typing import Optional
 from quart import Blueprint, request
 
 from objects import glob
+from objects.player import Player
 from objects.ranked import db as ranked_db
 from objects.ranked.consts import GameMode
 from handlers.response import ApiResponse
@@ -21,6 +22,20 @@ async def _resolve_elo(uid: int, mode: int) -> float:
     return float(stats["elo"])
 
 
+async def _ensure_loaded(uid: int) -> bool:
+    """Make sure ``uid`` is present in :data:`glob.players` so the multi
+    namespace machinery can build a ``PlayerMulti`` for them. Returns True
+    if loaded (or already present), False if the user does not exist."""
+    if glob.players.get(id=int(uid)) is not None:
+        return True
+    user = await glob.db.fetch("SELECT id FROM users WHERE id=$1", [int(uid)])
+    if user is None:
+        return False
+    player = await Player.from_sql(int(uid))
+    glob.players.add(player)
+    return True
+
+
 @bp.route("/join", methods=["POST"])
 async def join():
     body = await request.get_json(silent=True) or {}
@@ -33,8 +48,7 @@ async def join():
         return ApiResponse.bad_request("uid required (int).")
     if mode not in (GameMode.SOLO_1V1, GameMode.DUO_2V2):
         return ApiResponse.bad_request("Unsupported mode.")
-    user = await glob.db.fetch("SELECT id FROM users WHERE id=$1", [uid])
-    if user is None:
+    if not await _ensure_loaded(uid):
         return ApiResponse.not_found("User not found.")
     elo = await _resolve_elo(uid, mode)
     await ranked_db.queue_join(uid, mode, elo)
