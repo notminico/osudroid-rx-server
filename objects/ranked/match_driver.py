@@ -52,13 +52,16 @@ class RoomChannel(Protocol):
         *,
         to: Optional[str] = None,
         skip_sid: Optional[str] = None,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     async def set_beatmap(
         self, *, md5: str, title: str, artist: str, version: str
-    ) -> None: ...
+    ) -> None:
+        ...
 
-    async def start_play(self) -> None: ...
+    async def start_play(self) -> None:
+        ...
 
 
 # ---------------------------------------------------------------------------
@@ -174,9 +177,9 @@ class RankedMatchDriver:
         self.series = series
         self.channel = channel
         self._picker = picker
-        self.on_finished: Optional[Callable[["RankedMatchDriver"], Awaitable[None]]] = (
-            None
-        )
+        self.on_finished: Optional[
+            Callable[["RankedMatchDriver"], Awaitable[None]]
+        ] = None
 
     # ------------------------------------------------------------------
     # API used by the room socket handlers
