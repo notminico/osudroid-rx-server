@@ -342,12 +342,42 @@ class RankedMatchDriver:
     async def _enter_ban_phase(self) -> None:
         s = self.series
         s.phase = MatchPhase.BAN
-        s.next_banner_uid = self._lower_elo_player().uid
+
+        # Cosmetic 1-100 rolls a-la RomAI: the player whose roll comes
+        # out higher gets to ban first. We bias the rolls so the lower-
+        # ELO player wins more often (matches the previous deterministic
+        # behaviour), but the dice are visible so players still feel
+        # involved in the outcome.
+        import random
+
+        lower = self._lower_elo_player()
+        higher = self._other(lower.uid)
+
+        # Up to three rerolls so we don't ship ties; ties are handled
+        # gracefully (lower-ELO still bans first by default) but visually
+        # less satisfying.
+        for _ in range(3):
+            r_low = random.randint(40, 100)
+            r_high = random.randint(1, 60)
+            if r_low != r_high:
+                break
+
+        if r_low >= r_high:
+            s.next_banner_uid = lower.uid
+        else:
+            s.next_banner_uid = higher.uid
+
+        rolls = {
+            str(lower.uid): int(r_low),
+            str(higher.uid): int(r_high),
+        }
+
         await self.channel.emit_event(
             "rankedPhase",
             data={
                 "phase": "ban",
                 "firstBanner": str(s.next_banner_uid),
+                "rolls": rolls,
                 "bansPerPlayer": DEFAULT_BANS_PER_PLAYER,
                 "pool": [
                     {
